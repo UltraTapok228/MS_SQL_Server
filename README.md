@@ -157,3 +157,19 @@ LOG ON (
   - `GRANT` — выдача разрешений.
   - `REVOKE` — отзыв выданных разрешений.
   - `DENY` — явный запрет на действия.
+ 
+**T-sql**
+* Запрос с 14 слайда, CAST:
+* <img width="1633" height="845" alt="image" src="https://github.com/user-attachments/assets/b78e93cf-7299-49f6-b8b5-6ee4d7b565ca" />
+
+* Запрос с 8 слайда, оператор PRINT
+* <img width="684" height="685" alt="image" src="https://github.com/user-attachments/assets/699ca62a-d8df-47ad-b7ca-c92aad7321d2" />
+
+**База SQL-сервер**
+* 54 слайд
+* <img width="570" height="633" alt="image" src="https://github.com/user-attachments/assets/96fa9bca-6c2f-499c-9925-08b885fc6e05" />
+
+* 52 слайд
+* <img width="1103" height="704" alt="image" src="https://github.com/user-attachments/assets/7c90fd94-3ed2-45bc-8e93-2944e240d318" />
+
+ 
