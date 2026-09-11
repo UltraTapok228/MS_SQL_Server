@@ -1,4 +1,4 @@
-**04.09.2026**
+04.09.2026
 
 Отель - Компьютер  
 Этажи - Сервера  
@@ -79,7 +79,7 @@
 * После ввода запроса необходимо выполнить его, что бы в БД появилась таблица
 <img width="667" height="228" alt="image" src="https://github.com/user-attachments/assets/9620caca-1cf1-48e2-a773-adf055abdb53" />
 
-**10.09.2026**
+##10.09.2026##
 
 **Продвинутое создание БД (через код T-SQL)**
 
@@ -157,6 +157,8 @@ LOG ON (
   - `GRANT` — выдача разрешений.
   - `REVOKE` — отзыв выданных разрешений.
   - `DENY` — явный запрет на действия.
+
+11.09.26
  
 **T-sql**
 * Запрос с 14 слайда, CAST:
@@ -172,4 +174,45 @@ LOG ON (
 * 52 слайд
 * <img width="1103" height="704" alt="image" src="https://github.com/user-attachments/assets/7c90fd94-3ed2-45bc-8e93-2944e240d318" />
 
- 
+ **Презентация T-sql**
+
+ * **28 Слайд**
+ * <img width="1812" height="841" alt="image" src="https://github.com/user-attachments/assets/da290362-4453-41ae-a0d5-b705cc3dc226" />
+
+ * **29 слайд**
+ * <img width="1173" height="458" alt="image" src="https://github.com/user-attachments/assets/4345b8d4-5812-42fa-8a24-e897b98712b9" />
+ > Отработано успешно, с результатом: ```общее количество мест от 100 до 200```
+
+* **30 слайд**
+* Первый запрос:
+* <img width="1036" height="482" alt="image" src="https://github.com/user-attachments/assets/45754455-750d-42d0-be0e-403f3767d375" />
+---
+* Второй запрос:
+* <img width="1386" height="480" alt="image" src="https://github.com/user-attachments/assets/221582a7-fc44-4cc2-a168-40e6e10fa717" />
+
+* **31 слайд**
+* <img width="1414" height="466" alt="image" src="https://github.com/user-attachments/assets/aa07c9ef-6c03-4070-bb59-f57aad353b5c" />
+
+* **32 слайд**
+* Первый запрос:
+* <img width="1817" height="473" alt="image" src="https://github.com/user-attachments/assets/0fc9272e-1c72-4027-9f71-eb72bfefc741" />
+---
+* Второй запрос:
+* <img width="1396" height="459" alt="image" src="https://github.com/user-attachments/assets/fd494fa9-3912-4718-8f26-dfff779c599c" />
+
+
+* **33 слайд**
+* <img width="1394" height="208" alt="image" src="https://github.com/user-attachments/assets/4463f6c3-74b5-436a-bcd4-07600cfffda0" />
+
+* **34 слайд**
+* <img width="1161" height="478" alt="image" src="https://github.com/user-attachments/assets/d823c636-88cb-4396-b8d4-98dc2a962bc3" />
+
+* **35 слайд**
+  Первый пример:
+* <img width="569" height="336" alt="image" src="https://github.com/user-attachments/assets/65d44653-c356-4c6e-8c3d-aa3f93eca8ef" />
+---
+  Второй пример:
+* <img width="563" height="391" alt="image" src="https://github.com/user-attachments/assets/b0f2d80a-d5b7-44b1-97b7-fe49939e62b8" />
+
+
+
