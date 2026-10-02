@@ -254,4 +254,132 @@ GO
 
 ---
 
-скорить поиск и получение данных, однако их наличие также может увеличивать стоимость операций изменения данных, например `INSERT`, `UPDATE` и `DELETE`. Поэтому при проектировании базы данных важно учитывать не только скорость чтения, но и характер нагрузки на таблицу.
+**Дата:** 02.10.2026
+
+---
+
+## Задача 1. Создание кластеризованного индекса на head-таблице
+```sql
+USE IndexPractice;
+GO
+
+SET STATISTICS IO ON;
+
+-- 1. Смотрим план и logical reads ДО создания индекса (будет Table Scan)
+SELECT * FROM dbo.Products WHERE ProductID = 50000;
+GO
+
+-- 2. Создаем кластеризованный индекс
+CREATE CLUSTERED INDEX CIX_Products_ProductID ON dbo.Products (ProductID);
+GO
+
+-- 3. Смотрим план и logical reads ПОСЛЕ (будет Clustered Index Seek, чтений станет 2-3)
+SELECT * FROM dbo.Products WHERE ProductID = 50000;
+GO
+```
+
+Результат:
+<img width="339" height="163" alt="image" src="https://github.com/user-attachments/assets/a3eda7c5-7123-40a1-994b-35edb74ed8c9" />
+
+<img width="892" height="591" alt="image" src="https://github.com/user-attachments/assets/4331978d-64b7-41e2-83a5-d547bf3fafc4" />
+
+---
+
+## Задача 2. Некластеризованный индекс для точечного поиска
+```sql
+USE IndexPractice;
+GO
+
+-- 1. Создаем некластеризованный индекс по имени
+CREATE NONCLUSTERED INDEX NCIX_Products_Name ON dbo.Products (Name);
+GO
+
+-- 2. Выполняем поиск конкретного товара
+SELECT ProductID, Name, Price 
+FROM dbo.Products 
+WHERE Name = N'Товар-777';
+GO
+```
+
+Результат:
+<img width="898" height="453" alt="image" src="https://github.com/user-attachments/assets/db5c5c5d-7b55-4ca6-9879-0799eeaf6cc8" />
+
+<img width="912" height="631" alt="image" src="https://github.com/user-attachments/assets/5e14afe0-83ad-403c-a3e5-cfd48cec7bef" />
+
+---
+
+## Задача 3. Разница между Seek и Scan
+```sql
+USE IndexPractice;
+GO
+
+-- Запрос 1: Точечный поиск
+SELECT * FROM dbo.Orders WHERE OrderID = 100;
+
+-- Запрос 2: Диапазонный поиск
+SELECT * FROM dbo.Orders WHERE OrderID > 100 AND OrderID < 200;
+
+-- Запрос 3: Выборка всех строк
+SELECT * FROM dbo.Orders WHERE OrderID > 0;
+```
+
+Результат(план выполнения):
+<img width="698" height="711" alt="image" src="https://github.com/user-attachments/assets/b08cc8f4-cc53-4e50-9380-7ba663ceacb3" />
+
+Пояснение:
+> **Запрос 1 (OrderID = 100)**: Оператор Clustered Index Seek. Сервер мгновенно спускается по B-дереву кластеризованного индекса прямо к строке с номером 100. Это самая эффективная и дешевая операция для точечного поиска.
+
+> **Запрос 2 (OrderID > 100 AND OrderID < 200)**: Оператор Clustered Index Seek. Несмотря на то что это поиск нескольких строк, сервер использует Seek, чтобы быстро найти начальную точку (101), а затем читает данные по порядку до 199. Технически это называется Range Scan (сканирование диапазона), но в графическом плане SQL Server помечает это иконкой Seek.
+
+> **Запрос 3 (OrderID > 0)**: Оператор Clustered Index Scan. Оптимизатор понимает, что под условие > 0 попадают все 500 000 строк таблицы. Вместо того чтобы спускаться по B-дереву 500 тысяч раз (что очень долго), ему гораздо выгоднее просто прочитать весь листовой уровень индекса (саму таблицу) от первой до последней страницы. Поэтому выбирается Scan.
+
+---
+
+## Задача 4. Влияние selectivity на выбор индекса
+```sql
+-- Создание некластеризованных индексов
+CREATE NONCLUSTERED INDEX IX_Users_Gender ON dbo.Users (Gender);
+CREATE NONCLUSTERED INDEX IX_Users_Email ON dbo.Users (Email);
+
+-- Проверка влияния селективности на план выполнения
+SELECT * FROM dbo.Users WHERE Gender = 'M';
+SELECT * FROM dbo.Users WHERE Email = 'user150000@test.com';
+```
+
+<img width="799" height="622" alt="image" src="https://github.com/user-attachments/assets/e5c9407d-b9cb-41ff-807a-079b14af29c4" />
+
+---
+
+## Задача 5. Удаление и пересоздание индекса
+```sql
+USE IndexPractice;
+GO
+
+
+SELECT index_type_desc, page_count, record_count
+FROM sys.dm_db_index_physical_stats(DB_ID(), OBJECT_ID('dbo.Customers'), INDEXPROPERTY(OBJECT_ID('dbo.Customers'), 'NCIX_Email', 'IndexID'), NULL, 'DETAILED');
+
+-- 1. Удаляем индекс
+DROP INDEX NCIX_Email ON dbo.Customers;
+
+-- 2. Проверяем, что он исчез (выведет только кластерный PK)
+SELECT name, type_desc FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.Customers');
+
+-- 3. Пересоздаем индекс, добавив LastName как ключевой столбец
+CREATE NONCLUSTERED INDEX NCIX_Email ON dbo.Customers (Email, LastName);
+
+-- 4. Смотрим размер ПОСЛЕ (page_count станет больше, так как индекс "потяжелел")
+SELECT index_type_desc, page_count, record_count
+FROM sys.dm_db_index_physical_stats(DB_ID(), OBJECT_ID('dbo.Customers'), INDEXPROPERTY(OBJECT_ID('dbo.Customers'), 'NCIX_Email', 'IndexID'), NULL, 'DETAILED');
+```
+
+Результат:
+<img width="869" height="549" alt="image" src="https://github.com/user-attachments/assets/910dabad-f952-4c22-a590-7c45bccf4f05" />
+
+<img width="892" height="793" alt="image" src="https://github.com/user-attachments/assets/91e414d2-7cfc-4832-bdee-bb5ac098804f" />
+
+
+
+
+
+
