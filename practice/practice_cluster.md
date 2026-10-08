@@ -378,8 +378,121 @@ FROM sys.dm_db_index_physical_stats(DB_ID(), OBJECT_ID('dbo.Customers'), INDEXPR
 
 <img width="892" height="793" alt="image" src="https://github.com/user-attachments/assets/91e414d2-7cfc-4832-bdee-bb5ac098804f" />
 
+---
 
+## Задача 6
+```sql
+-- 1. Подготовка
+CREATE TABLE dbo.OrdersTask6 (
+    OrderID INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID INT NOT NULL,
+    OrderDate DATE NOT NULL,
+    TotalAmount DECIMAL(18,2) NOT NULL,
+    Filler CHAR(50) DEFAULT 'A' -- чтобы раздуть таблицу
+);
 
+INSERT INTO dbo.OrdersTask6 (CustomerID, OrderDate, TotalAmount)
+SELECT TOP (50000)
+    ABS(CHECKSUM(NEWID())) % 1000,
+    DATEADD(DAY, -(ABS(CHECKSUM(NEWID())) % 1000), GETDATE()),
+    ABS(CHECKSUM(NEWID())) % 10000 / 100.0
+FROM sys.all_objects a CROSS JOIN sys.all_objects b;
+GO
 
+SET STATISTICS IO ON;
 
+-- 2. Индекс БЕЗ INCLUDE (будет Key Lookup)
+CREATE NONCLUSTERED INDEX IX_Orders_CustDate ON dbo.OrdersTask6 (CustomerID, OrderDate);
+GO
 
+SELECT OrderID, CustomerID, OrderDate, TotalAmount
+FROM dbo.OrdersTask6 
+WHERE CustomerID = 50 AND OrderDate >= '2022-01-01';
+GO
+
+-- 3. Индекс С INCLUDE (Покрывающий)
+DROP INDEX IX_Orders_CustDate ON dbo.OrdersTask6;
+CREATE NONCLUSTERED INDEX IX_Orders_CustDate_Inc 
+ON dbo.OrdersTask6 (CustomerID, OrderDate) INCLUDE (TotalAmount);
+GO
+
+SELECT OrderID, CustomerID, OrderDate, TotalAmount
+FROM dbo.OrdersTask6 
+WHERE CustomerID = 50 AND OrderDate >= '2022-01-01';
+GO
+```
+<img width="361" height="434" alt="image" src="https://github.com/user-attachments/assets/c2993bda-e2ba-4f5f-b146-ca11c6148ac5" />
+
+---
+
+## Задача 7
+```sql
+CREATE TABLE dbo.Sales (
+    SaleID INT IDENTITY(1,1) PRIMARY KEY,
+    RegionID INT NOT NULL,
+    SaleDate DATE NOT NULL,
+    Amount DECIMAL(18,2) NOT NULL
+);
+
+INSERT INTO dbo.Sales (RegionID, SaleDate, Amount)
+SELECT TOP (50000)
+    ABS(CHECKSUM(NEWID())) % 50,
+    DATEADD(DAY, -(ABS(CHECKSUM(NEWID())) % 365), '2024-12-31'),
+    100.0
+FROM sys.all_objects a CROSS JOIN sys.all_objects b;
+GO
+
+-- Создаем два индекса с разным порядком ключей
+CREATE NONCLUSTERED INDEX IX_1 ON dbo.Sales (RegionID, SaleDate);
+CREATE NONCLUSTERED INDEX IX_2 ON dbo.Sales (SaleDate, RegionID);
+GO
+
+-- Запрос 1: Ищем по обоим полям
+SELECT * FROM dbo.Sales WHERE RegionID = 5 AND SaleDate = '2024-01-15';
+
+-- Запрос 2: Ищем только по второму полю из IX_1
+SELECT * FROM dbo.Sales WHERE SaleDate = '2024-01-15';
+GO
+```
+<img width="296" height="494" alt="image" src="https://github.com/user-attachments/assets/5eab7a40-f33f-4728-9607-3ff017bfc714" />
+
+---
+
+## Задача 8
+```sql
+-- Создаем Heap (кучу) - без PRIMARY KEY
+CREATE TABLE dbo.LogHeap (
+    LogID INT IDENTITY(1,1) NOT NULL, 
+    LogDate DATE NOT NULL,
+    LogMessage VARCHAR(100) DEFAULT 'System ok'
+);
+
+-- Создаем таблицу под кластер
+CREATE TABLE dbo.LogClustered (
+    LogID INT IDENTITY(1,1) NOT NULL,
+    LogDate DATE NOT NULL,
+    LogMessage VARCHAR(100) DEFAULT 'System ok'
+);
+
+-- Заполняем Кучу
+INSERT INTO dbo.LogHeap (LogDate)
+SELECT TOP (50000) DATEADD(DAY, -(ABS(CHECKSUM(NEWID())) % 365), '2024-12-31')
+FROM sys.all_objects a CROSS JOIN sys.all_objects b;
+
+-- Копируем те же данные в кластерную таблицу
+INSERT INTO dbo.LogClustered (LogDate) SELECT LogDate FROM dbo.LogHeap;
+
+-- Создаем кластеризованный индекс по дате
+CREATE CLUSTERED INDEX CIX_LogClustered_LogDate ON dbo.LogClustered (LogDate);
+GO
+
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+
+-- Выполняем идентичные диапазонные запросы
+SELECT * FROM dbo.LogHeap WHERE LogDate BETWEEN '2024-01-01' AND '2024-01-31';
+
+SELECT * FROM dbo.LogClustered WHERE LogDate BETWEEN '2024-01-01' AND '2024-01-31';
+GO
+```
+<img width="263" height="495" alt="image" src="https://github.com/user-attachments/assets/6743a8d9-324f-4712-b23a-84577b656392" />
