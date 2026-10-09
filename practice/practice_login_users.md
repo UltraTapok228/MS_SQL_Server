@@ -173,4 +173,51 @@ DROP SERVER ROLE CustomServerRole;
 
 ---
 
-## Задание 10. Добавление пользователя в фиксированную роль БД
+## Задание 11
+```sql
+CREATE ROLE SalesRole;
+
+GRANT SELECT, INSERT, UPDATE ON Sales.SalesOrderHeader TO SalesRole;
+
+ALTER ROLE SalesRole ADD MEMBER JohnDoe;
+GO
+
+```
+
+## Задание 12
+```sql
+USE College;
+GO
+EXECUTE AS USER = 'RestrictedUser';
+
+-- 1. Доступ к объекту схемы без прямого запрета
+SELECT * FROM Sales.SalesOrderHeader;
+
+-- 2. Доступ к объекту с явным DENY (запрещено)
+SELECT * FROM Sales.CreditCard;
+
+REVERT;
+GO
+```
+
+## Задание 13
+```sql
+USE College;
+GO
+
+IF OBJECT_ID('dbo.uspOtherProc', 'P') IS NOT NULL DROP PROCEDURE dbo.uspOtherProc;
+GO
+CREATE PROCEDURE dbo.uspOtherProc AS SELECT 'Секретно' AS Msg;
+GO
+
+EXECUTE AS USER = 'AppServiceUser';
+
+-- 1 Вызов разрешенной процедуры
+EXEC dbo.uspGetEmployeeManagers;
+
+-- 2 Вызов неразрешенной процедуры
+EXEC dbo.uspOtherProc;
+
+REVERT;
+GO
+```
